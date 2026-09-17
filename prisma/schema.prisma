@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  styleProfile StylePreference? 
+  wardrobeItems WardrobeItem[]
+  outfits Outfit[]
+  calendarEvents CalendarEvent[]
+  aiConversations AIConversation[]
+  suspended Boolean @default(false)
+
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model StylePreference {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favoriteStyles     String[]
+  preferredColors    String[]
+  favoriteCategories String[]
+  preferredOccasions String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model WardrobeItem {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  category    String
+  subcategory String?
+  color       String
+  secondColor String?
+  pattern     String?
+  material    String?
+  season      String?
+  occasion    String?
+  style       String?
+  brand       String?
+  notes       String?
+  imageUrl    String
+  imagePublicId String
+  isFavorite  Boolean  @default(false)
+  wearCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  outfitItems OutfitItem[]
+  @@index([userId])
+}
+
+model Outfit {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  occasion   String?
+  style      String?
+  isFavorite Boolean      @default(false)
+  items      OutfitItem[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  calendarEvents CalendarEvent[]
+  @@index([userId])
+}
+
+model OutfitItem {
+  id             String       @id @default(cuid())
+  outfitId       String
+  outfit         Outfit       @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  wardrobeItemId String
+  wardrobeItem   WardrobeItem @relation(fields: [wardrobeItemId], references: [id], onDelete: Cascade)
+
+  @@unique([outfitId, wardrobeItemId])
+}
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitId  String
+  outfit    Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  date      DateTime
+  occasion  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([date])
+}
+model AIConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AIMessage[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   AIConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime        @default(now())
+
+  @@index([conversationId])
+}
