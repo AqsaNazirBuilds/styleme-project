@@ -1,107 +1,255 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import Link from "next/link";
-import { Heart } from "lucide-react";
+import {
+  wardrobeItemSchema,
+  type WardrobeItemInput,
+  CATEGORY_OPTIONS,
+  COLOR_OPTIONS,
+  SEASON_OPTIONS,
+  OCCASION_OPTIONS,
+  STYLE_OPTIONS,
+  MAX_IMAGE_SIZE,
+  ALLOWED_IMAGE_TYPES,
+} from "@/lib/validations/wardrobe";
 import { Button } from "@/components/ui/button";
-import { WardrobeFilters } from "@/components/wardrobe/wardrobe-filters";
-import type { Prisma } from "@/generated/prisma/client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function WardrobePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; category?: string; color?: string; sort?: string }>;
-}) {
-  const session = await auth();
+export default function AddWardrobeItemPage() {
+  const router = useRouter();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<WardrobeItemInput>({
+    resolver: zodResolver(wardrobeItemSchema),
+  });
 
-  const { q, category, color, sort } = await searchParams;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setImageError(null);
 
-  const where: Prisma.WardrobeItemWhereInput = {
-    userId: session.user.id,
-    ...(q && { name: { contains: q, mode: "insensitive" } }),
-    ...(category && { category }),
-    ...(color && { color }),
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setImageError("Only JPEG, PNG, or WEBP images are allowed");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setImageError("Image must be under 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  const orderBy: Prisma.WardrobeItemOrderByWithRelationInput =
-    sort === "oldest"
-      ? { createdAt: "asc" }
-      : sort === "name"
-        ? { name: "asc" }
-        : sort === "favorites"
-          ? { isFavorite: "desc" }
-          : { createdAt: "desc" };
+  const onSubmit = async (data: WardrobeItemInput) => {
+    setServerError(null);
 
-  const items = await prisma.wardrobeItem.findMany({ where, orderBy });
-  const totalItems = await prisma.wardrobeItem.count({
-    where: { userId: session.user.id },
-  });
+    if (!imageFile) {
+      setImageError("An image is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+
+      const res = await fetch("/api/wardrobe", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setServerError(result.message ?? "Something went wrong");
+        return;
+      }
+
+      router.push("/wardrobe");
+      router.refresh();
+    } catch {
+      setServerError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl">Your wardrobe</h1>
-            <p className="text-muted-foreground">
-              {totalItems} {totalItems === 1 ? "item" : "items"}
-            </p>
-          </div>
-          <Button render={<Link href="/wardrobe/add" />} nativeButton={false}>
-            Add item
-          </Button>
-        </div>
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-6 text-3xl">Add to your wardrobe</h1>
 
-        {totalItems > 0 && <WardrobeFilters />}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Photo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center gap-4">
+                {imagePreview ? (
+                  <div className="relative h-48 w-48 overflow-hidden rounded-md border border-border">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-48 w-48 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+                    No image selected
+                  </div>
+                )}
+                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                {imageError && (
+                  <p className="text-sm text-destructive">{imageError}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {totalItems === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border py-20 text-center">
-            <p className="mb-2 text-lg">Your wardrobe is empty</p>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Add your first item to start building your digital closet.
-            </p>
-            <Button render={<Link href="/wardrobe/add" />} nativeButton={false}>
-              Add your first item
-            </Button>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border py-20 text-center">
-            <p className="text-lg">No items match your filters</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {items.map((item) => (
-              <Link
-                key={item.id}
-                href={`/wardrobe/${item.id}`}
-                className="overflow-hidden rounded-md border border-border bg-card transition-opacity hover:opacity-90"
-              >
-                <div className="relative aspect-square w-full">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    fill
-                    className="object-cover"
-                  />
-                  {item.isFavorite && (
-                    <Heart className="absolute top-2 right-2 size-5 fill-primary text-primary" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Details</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" placeholder="e.g. White Oversized Shirt" {...register("name")} />
+                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label>Category</Label>
+                  <Select onValueChange={(v) => setValue("category", (v ?? "") as string)}>
+                    <SelectTrigger aria-label="Category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORY_OPTIONS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.category && (
+                    <p className="text-sm text-destructive">{errors.category.message}</p>
                   )}
                 </div>
-                <div className="p-3">
-                  <p className="truncate text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.category} · {item.color}
-                  </p>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Color</Label>
+                  <Select onValueChange={(v) => setValue("color", (v ?? "") as string)}>
+                    <SelectTrigger aria-label="Color">
+                      <SelectValue placeholder="Select color" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COLOR_OPTIONS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.color && (
+                    <p className="text-sm text-destructive">{errors.color.message}</p>
+                  )}
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label>Season</Label>
+                  <Select onValueChange={(v) => setValue("season", (v ?? "") as string)}>
+                    <SelectTrigger aria-label="Season">
+                      <SelectValue placeholder="Select season" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEASON_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Occasion</Label>
+                  <Select onValueChange={(v) => setValue("occasion", (v ?? "") as string)}>
+                    <SelectTrigger aria-label="Occasion">
+                      <SelectValue placeholder="Select occasion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OCCASION_OPTIONS.map((o) => (
+                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label>Style</Label>
+                <Select onValueChange={(v) => setValue("style", (v ?? "") as string)}>
+                  <SelectTrigger aria-label="Style">
+                    <SelectValue placeholder="Select style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STYLE_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="brand">Brand (optional)</Label>
+                <Input id="brand" {...register("brand")} />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="notes">Notes (optional)</Label>
+                <Textarea id="notes" {...register("notes")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {serverError && (
+            <p className="text-center text-sm text-destructive">{serverError}</p>
+          )}
+
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add to wardrobe"}
+          </Button>
+        </form>
       </div>
     </div>
   );

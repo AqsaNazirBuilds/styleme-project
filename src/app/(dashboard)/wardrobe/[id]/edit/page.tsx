@@ -122,7 +122,7 @@ export default function EditWardrobeItemPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label>Category</Label>
-                  <Select onValueChange={(v) => setValue("category", v ?? "")} defaultValue={undefined}>
+                  <Select onValueChange={(v) => setValue("category", (v ?? "") as string)} defaultValue={undefined}>
                     <SelectTrigger aria-label="Category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -136,7 +136,7 @@ export default function EditWardrobeItemPage() {
 
                 <div className="flex flex-col gap-2">
                   <Label>Color</Label>
-                  <Select onValueChange={(v) => setValue("color", v ?? "")}>
+                  <Select onValueChange={(v) => setValue("color", (v ?? "") as string)}>
                     <SelectTrigger aria-label="Color">
                       <SelectValue placeholder="Select color" />
                     </SelectTrigger>
@@ -152,7 +152,7 @@ export default function EditWardrobeItemPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label>Season</Label>
-                  <Select onValueChange={(v) => setValue("season", v ?? "")}>
+                  <Select onValueChange={(v) => setValue("season", (v ?? "") as string)}>
                     <SelectTrigger aria-label="Season">
                       <SelectValue placeholder="Select season" />
                     </SelectTrigger>
@@ -166,7 +166,7 @@ export default function EditWardrobeItemPage() {
 
                 <div className="flex flex-col gap-2">
                   <Label>Occasion</Label>
-                  <Select onValueChange={(v) => setValue("occasion", v ?? "")}>
+                  <Select onValueChange={(v) => setValue("occasion", (v ?? "") as string)}>
                     <SelectTrigger aria-label="Occasion">
                       <SelectValue placeholder="Select occasion" />
                     </SelectTrigger>
@@ -181,7 +181,7 @@ export default function EditWardrobeItemPage() {
 
               <div className="flex flex-col gap-2">
                 <Label>Style</Label>
-                <Select onValueChange={(v) => setValue("style", v ?? "")}>
+                <Select onValueChange={(v) => setValue("style", (v ?? "") as string)}>
                   <SelectTrigger aria-label="Style">
                     <SelectValue placeholder="Select style" />
                   </SelectTrigger>
