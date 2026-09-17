@@ -139,7 +139,7 @@ export default function NewOutfitPage() {
           </div>
           <div className="flex flex-col gap-2">
             <Label>Occasion</Label>
-            <Select value={occasion} onValueChange={setOccasion}>
+            <Select value={occasion} onValueChange={(v) => setOccasion(v ?? "")}>
               <SelectTrigger aria-label="Occasion">
                 <SelectValue placeholder="Select occasion" />
               </SelectTrigger>
@@ -152,7 +152,7 @@ export default function NewOutfitPage() {
           </div>
           <div className="flex flex-col gap-2">
             <Label>Style</Label>
-            <Select value={style} onValueChange={setStyle}>
+            <Select value={style} onValueChange={(v) => setStyle(v ?? "")}>
               <SelectTrigger aria-label="Style">
                 <SelectValue placeholder="Select style" />
               </SelectTrigger>

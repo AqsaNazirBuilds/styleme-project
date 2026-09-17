@@ -153,7 +153,7 @@ export default function AddWardrobeItemPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label>Category</Label>
-                  <Select onValueChange={(v) => setValue("category", v)}>
+                  <Select onValueChange={(v) => setValue("category", v ?? "")}>
                     <SelectTrigger aria-label="Category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -170,7 +170,7 @@ export default function AddWardrobeItemPage() {
 
                 <div className="flex flex-col gap-2">
                   <Label>Color</Label>
-                  <Select onValueChange={(v) => setValue("color", v)}>
+                  <Select onValueChange={(v) => setValue("color", v ?? "")}>
                     <SelectTrigger aria-label="Color">
                       <SelectValue placeholder="Select color" />
                     </SelectTrigger>
@@ -189,7 +189,7 @@ export default function AddWardrobeItemPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label>Season</Label>
-                  <Select onValueChange={(v) => setValue("season", v)}>
+                  <Select onValueChange={(v) => setValue("season", v ?? "")}>
                     <SelectTrigger aria-label="Season">
                       <SelectValue placeholder="Select season" />
                     </SelectTrigger>
@@ -203,7 +203,7 @@ export default function AddWardrobeItemPage() {
 
                 <div className="flex flex-col gap-2">
                   <Label>Occasion</Label>
-                  <Select onValueChange={(v) => setValue("occasion", v)}>
+                  <Select onValueChange={(v) => setValue("occasion", v ?? "")}>
                     <SelectTrigger aria-label="Occasion">
                       <SelectValue placeholder="Select occasion" />
                     </SelectTrigger>
@@ -218,7 +218,7 @@ export default function AddWardrobeItemPage() {
 
               <div className="flex flex-col gap-2">
                 <Label>Style</Label>
-                <Select onValueChange={(v) => setValue("style", v)}>
+                <Select onValueChange={(v) => setValue("style", v ?? "")}>
                   <SelectTrigger aria-label="Style">
                     <SelectValue placeholder="Select style" />
                   </SelectTrigger>

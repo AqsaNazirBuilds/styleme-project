@@ -209,7 +209,7 @@ export default function PlannerPage() {
               </p>
             ) : (
               <div className="flex gap-2">
-                <Select value={selectedOutfitId} onValueChange={setSelectedOutfitId}>
+                <Select value={selectedOutfitId} onValueChange={(v) => setSelectedOutfitId(v ?? "")}>
                   <SelectTrigger className="flex-1" aria-label="Select an outfit">
                     <SelectValue placeholder="Select an outfit" />
                   </SelectTrigger>

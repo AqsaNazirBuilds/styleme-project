@@ -104,7 +104,7 @@ export default function PackingAssistantPage() {
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="trip-type">Trip type</Label>
-            <Select value={occasion} onValueChange={setOccasion}>
+            <Select value={occasion} onValueChange={(v) => setOccasion(v ?? "")}>
               <SelectTrigger id="trip-type" aria-label="Trip type">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
